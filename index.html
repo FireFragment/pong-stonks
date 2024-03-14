@@ -24,6 +24,7 @@
         justify-content: center;
         align-items: center;
         background: linear-gradient(to bottom, #172b36 0%, #d9e8e3 100%);
+        font-family: monospace;
       }
 
       #container {
@@ -35,7 +36,7 @@
         height: 100%;
       }
 
-      canvas {
+      #pongCanvas {
         display: block;
         border-radius: 4px;
         overflow: hidden;
@@ -50,6 +51,12 @@
         font-size: 16px;
         padding-left: 20px;
         color: #172b36;
+        text-align: center;
+      }
+      #money {
+      	font-size: 24px;
+      color: #172b36;
+        text-align: center;
       }
 
       #made {
@@ -64,13 +71,41 @@
       #made a {
         color: #172b36;
       }
+      
+      button {
+      	font-family: monospace;
+        border: none;
+        padding: 16px;
+  
+      }
+      
+      .nbtn {
+      	background: #114C5A;
+          color: white;
+      }
+      .dbtn {
+      	background: #D9E8E3;
+          color: black;
+      }
     </style>
   </head>
 
   <body>
     <div id="container">
-      <canvas id="pongCanvas" width="600" height="600"></canvas>
+      <canvas id="pongCanvas" width="800" height="800"></canvas>
       <div id="score"></div>
+      <div>
+        <button class="dbtn" onclick="dbuy()">Buy</button>
+        <button class="dbtn" onclick="dsell()">Sell</button>
+        
+        |
+        
+        <button class="nbtn" onclick="nbuy()">Buy</button>
+        <button class="nbtn" onclick="nsell()">Sell</button>
+        
+
+      </div>
+      <br>
       <i style="color:gray">- NET WORTH -</i>
       <div id="money"></div>
       <br>
@@ -103,21 +138,21 @@
 
     const DAY_COLOR = colorPalette.MysticMint;
     const DAY_BALL_COLOR = colorPalette.NocturnalExpedition;
+
     const NIGHT_COLOR = colorPalette.NocturnalExpedition;
     const NIGHT_BALL_COLOR = colorPalette.MysticMint;
+
     const SQUARE_SIZE = 25;
-    const MIN_SPEED = 5;
-    const MAX_SPEED = 10;
+    
+    const STOCK_COEF = 1;
 
     const numSquaresX = canvas.width / SQUARE_SIZE;
     const numSquaresY = canvas.height / SQUARE_SIZE;
 
-    let dayScore = 0;
-    let nightScore = 0;
+    let squares = [];
+    
+    let time = 0;
 
-    const squares = [];
-
-    // Populate the fields, one half day, one half night
     for (let i = 0; i < numSquaresX; i++) {
       squares[i] = [];
       for (let j = 0; j < numSquaresY; j++) {
@@ -125,39 +160,76 @@
       }
     }
 
-    const balls = [
-      {
-        x: canvas.width / 4,
-        y: canvas.height / 2,
-        dx: 8,
-        dy: -8,
-        reverseColor: DAY_COLOR,
-        ballColor: DAY_BALL_COLOR,
-      },
-      {
-        x: (canvas.width / 4) * 3,
-        y: canvas.height / 2,
-        dx: -8,
-        dy: 8,
-        reverseColor: NIGHT_COLOR,
-        ballColor: NIGHT_BALL_COLOR,
-      },
-    ];
+    let x1 = Math.random() * canvas.width / 2 //canvas.width / 4;
+    let y1 = Math.random() * canvas.height;
+    
+
+    let x2 = (canvas.width / 4) * 3;
+    x2 = Math.random() * canvas.width / 2 + canvas.width / 2 
+    let y2 = Math.random() * canvas.height;
+    let dx2 = -12.5; 
+    let dy2 = 12.5;
+    let dx1 = 12.5;
+    let dy1 = -12.5;
+    
+    let tax = 0.2;
+    
+    /*
+    dx2 = -6.25; 
+    dy2 = 6.25;
+    dx1 = 6.25;
+    dy1 = -6.25; */
 
     let iteration = 0;
+    
+    let player1money = 2000;
+    let player2money = 2000;
+    
+    let player1black = 0;
+    let player1white = 0;
+    
+    let blackCost = 100;
+    let whiteCost = 100;
+    
+    let taxCoef = 1
+    
+    function nbuy() {
+    	if (player1money > blackCost) {
+      	player1money -= blackCost;
+          player1black += 1;
+        }
+    }
+    
+    function nsell() {
+    	if (player1black > 0) {
+      	player1money += blackCost * taxCoef;
+          player1black -= 1;
+        }
+    }
+    
+    function dbuy() {
+    	if (player1money > whiteCost) {
+      	player1money -= whiteCost;
+          player1white += 1;
+        }
+    }
+    
+    function dsell() {
+    	if (player1white > 0) {
+      	player1money += whiteCost * taxCoef;
+          player1white -= 1;
+        }
+    }
 
-    function drawBall(ball) {
+    function drawBall(x, y, color) {
       ctx.beginPath();
-      ctx.arc(ball.x, ball.y, SQUARE_SIZE / 2, 0, Math.PI * 2, false);
-      ctx.fillStyle = ball.ballColor;
+      ctx.arc(x, y, SQUARE_SIZE / 2, 0, Math.PI * 2, false);
+      ctx.fillStyle = color;
       ctx.fill();
       ctx.closePath();
     }
 
     function drawSquares() {
-      dayScore = 0;
-      nightScore = 0;
-
       for (let i = 0; i < numSquaresX; i++) {
         for (let j = 0; j < numSquaresY; j++) {
           ctx.fillStyle = squares[i][j];
@@ -167,87 +239,117 @@
             SQUARE_SIZE,
             SQUARE_SIZE
           );
-
-          // Update scores
-          if (squares[i][j] === DAY_COLOR) dayScore++;
-          if (squares[i][j] === NIGHT_COLOR) nightScore++;
         }
       }
     }
 
-    function checkSquareCollision(ball) {
+    function updateSquareAndBounce(x, y, dx, dy, color) {
+      let updatedDx = dx;
+      let updatedDy = dy;
+
       // Check multiple points around the ball's circumference
       for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
-        const checkX = ball.x + Math.cos(angle) * (SQUARE_SIZE / 2);
-        const checkY = ball.y + Math.sin(angle) * (SQUARE_SIZE / 2);
+        let checkX = x + Math.cos(angle) * (SQUARE_SIZE / 2);
+        let checkY = y + Math.sin(angle) * (SQUARE_SIZE / 2);
 
-        const i = Math.floor(checkX / SQUARE_SIZE);
-        const j = Math.floor(checkY / SQUARE_SIZE);
+        let i = Math.floor(checkX / SQUARE_SIZE);
+        let j = Math.floor(checkY / SQUARE_SIZE);
 
         if (i >= 0 && i < numSquaresX && j >= 0 && j < numSquaresY) {
-          if (squares[i][j] !== ball.reverseColor) {
-            // Square hit! Update square color
-            squares[i][j] = ball.reverseColor;
+          if (squares[i][j] !== color) {
+            squares[i][j] = color;
 
             // Determine bounce direction based on the angle
             if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
-              ball.dx = -ball.dx;
+              updatedDx = -updatedDx;
             } else {
-              ball.dy = -ball.dy;
+              updatedDy = -updatedDy;
             }
           }
         }
       }
+
+      return { dx: updatedDx, dy: updatedDy };
     }
 
-    function checkBoundaryCollision(ball) {
-      if (
-        ball.x + ball.dx > canvas.width - SQUARE_SIZE / 2 ||
-        ball.x + ball.dx < SQUARE_SIZE / 2
-      ) {
-        ball.dx = -ball.dx;
+    function updateScoreElement() {
+      //let blackCost = nightScore/50;
+      let dayScore = 0;
+      let nightScore = 0;
+      
+      for (let i = 0; i < numSquaresX; i++) {
+        for (let j = 0; j < numSquaresY; j++) {
+          if (squares[i][j] === DAY_COLOR) {
+            dayScore++;
+          } else if (squares[i][j] === NIGHT_COLOR) {
+            nightScore++;
+          }
+        }
       }
-      if (
-        ball.y + ball.dy > canvas.height - SQUARE_SIZE / 2 ||
-        ball.y + ball.dy < SQUARE_SIZE / 2
-      ) {
-        ball.dy = -ball.dy;
-      }
+      
+       blackCost = Math.floor( nightScore * STOCK_COEF);
+       whiteCost = Math.floor( dayScore * STOCK_COEF);
+       
+       let player1worth = player1money + player1black*blackCost + player1white*whiteCost;
+
+      scoreElement.innerHTML = `${player1white} <b>OWNED</b> ${player1black}<br>$${whiteCost} <b>PRICE</b> $${blackCost} <br>$${player1money}<br><br>`;
+      
+      moneyElement.innerHTML = `$${player1worth}`
+      
+      
+      let totSecs = Math.floor(time/60);
+      let secs = totSecs % 60;
+      let mins = Math.floor(totSecs / 60);
+      timeElement.innerHTML = `${mins}:${secs}`
     }
 
-    function addRandomness(ball) {
-      ball.dx += Math.random() * 0.01 - 0.005;
-      ball.dy += Math.random() * 0.01 - 0.005;
+    function checkBoundaryCollision(x, y, dx, dy) {
+      if (x + dx > canvas.width - SQUARE_SIZE / 2 || x + dx < SQUARE_SIZE / 2) {
+        dx = -dx;
+      }
+      if (
+        y + dy > canvas.height - SQUARE_SIZE / 2 ||
+        y + dy < SQUARE_SIZE / 2
+      ) {
+        dy = -dy;
+      }
 
-      // Limit the speed of the ball
-      ball.dx = Math.min(Math.max(ball.dx, -MAX_SPEED), MAX_SPEED);
-      ball.dy = Math.min(Math.max(ball.dy, -MAX_SPEED), MAX_SPEED);
-
-      // Make sure the ball always maintains a minimum speed
-      if (Math.abs(ball.dx) < MIN_SPEED)
-        ball.dx = ball.dx > 0 ? MIN_SPEED : -MIN_SPEED;
-      if (Math.abs(ball.dy) < MIN_SPEED)
-        ball.dy = ball.dy > 0 ? MIN_SPEED : -MIN_SPEED;
+      return { dx: dx, dy: dy };
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawSquares();
 
-      scoreElement.textContent = `day ${dayScore} | night ${nightScore}`;
+      drawBall(x1, y1, DAY_BALL_COLOR);
+      let bounce1 = updateSquareAndBounce(x1, y1, dx1, dy1, DAY_COLOR);
+      dx1 = bounce1.dx;
+      dy1 = bounce1.dy;
 
-      balls.forEach((ball) => {
-        drawBall(ball);
-        checkSquareCollision(ball);
-        checkBoundaryCollision(ball);
-        ball.x += ball.dx;
-        ball.y += ball.dy;
+      drawBall(x2, y2, NIGHT_BALL_COLOR);
+      let bounce2 = updateSquareAndBounce(x2, y2, dx2, dy2, NIGHT_COLOR);
+      dx2 = bounce2.dx;
+      dy2 = bounce2.dy;
 
-        addRandomness(ball);
-      });
+      let boundary1 = checkBoundaryCollision(x1, y1, dx1, dy1);
+      dx1 = boundary1.dx;
+      dy1 = boundary1.dy;
+
+      let boundary2 = checkBoundaryCollision(x2, y2, dx2, dy2);
+      dx2 = boundary2.dx;
+      dy2 = boundary2.dy;
+
+      x1 += dx1;
+      y1 += dy1;
+      x2 += dx2;
+      y2 += dy2;
 
       iteration++;
       if (iteration % 1_000 === 0) console.log("iteration", iteration);
+
+      updateScoreElement();
+      
+      time += 1;
 
       requestAnimationFrame(draw);
     }
