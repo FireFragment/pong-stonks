@@ -1,4 +1,4 @@
-# Pong Wars
+# Pong Stonks
 
 It's the eternal battle between day and night, good and bad. And now, you can bet on it!
 
