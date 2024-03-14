@@ -10,6 +10,10 @@ Each of the *teams* (white and blue) have their stocks. Price of 1 white stock i
 
 Unlike the original version, starting positions are random here.
 
+## Limitations
+
+This is quickly put together, so it doesn't work on all screen sizes and the code quality is well... questionable. :)
+
 ## Credits
 
 This is fork of [Pong wars](https://github.com/vnglst/pong-wars) by [Koen van Gilst](https://github.com/vnglst)
