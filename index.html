@@ -71,6 +71,10 @@
     <div id="container">
       <canvas id="pongCanvas" width="600" height="600"></canvas>
       <div id="score"></div>
+      <i style="color:gray">- NET WORTH -</i>
+      <div id="money"></div>
+      <br>
+      <div id="time"></div>
       <p id="made">
         made by <a href="https://koenvangilst.nl">Koen van Gilst</a> | source on
         <a href="https://github.com/vnglst/pong-wars">github</a>
@@ -94,6 +98,8 @@
     const canvas = document.getElementById("pongCanvas");
     const ctx = canvas.getContext("2d");
     const scoreElement = document.getElementById("score");
+    const moneyElement = document.getElementById("money");
+    const timeElement = document.getElementById("time");
 
     const DAY_COLOR = colorPalette.MysticMint;
     const DAY_BALL_COLOR = colorPalette.NocturnalExpedition;
