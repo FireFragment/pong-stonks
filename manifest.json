@@ -1,0 +1,7 @@
+{
+	"name": "Pong Stonks",
+	"short_name": "Pong Stonks",
+	"display": "standalone",
+	"start_url": "./?utm_source=pwa_install",
+	"scope": "."
+}
