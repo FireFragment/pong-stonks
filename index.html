@@ -131,7 +131,7 @@
         <br>
         <div id="time"></div>
         <p id="made"><br>
-          <b>PongStonks v0.2</b> <br><a href="https://github.com/FireFragment/pong-stonks">Source code</a><br>
+          <b>PongStonks v0.2.1</b> <br><a href="https://github.com/FireFragment/pong-stonks">Source code</a><br>
           Based on <a href="https://github.com/vnglst/pong-wars">Pong wars</a> by <a href="https://koenvangilst.nl">Koen van Gilst</a>
 
         </p>
@@ -140,6 +140,9 @@
   </body>
 
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const modPeta = urlParams.get('peta');
+
     // Source palette: https://twitter.com/AlexCristache/status/1738610343499157872
     // Idea for Pong wars: https://twitter.com/nicolasdnl/status/1749715070928433161
 
@@ -317,10 +320,11 @@
       scoreElement.innerHTML = `${player1white} <b>OWNED</b> ${player1black}<br>$${whiteCost} <b>PRICE</b> $${blackCost} <br>$${player1money}<br><br>`;
       
       moneyElement.innerHTML = `$${player1worth}`
-      
+
       
       let totSecs = Math.floor(time/60);
       let secs = totSecs % 60;
+
       let mins = Math.floor(totSecs / 60);
       timeElement.innerHTML = `${mins}:${secs}`
     }
@@ -340,6 +344,13 @@
     }
 
     function draw() {
+      // Péťa mod
+      if ((time % 600) == 0 && time != 0 && peta_mod) {
+        if (Math.random() >= 0.5) {
+          window.location.reload();
+        }
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawSquares();
 
